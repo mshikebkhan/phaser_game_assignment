@@ -16,8 +16,9 @@ var frog;
 var cursors;
 var score = 0;
 var scoreText;
+var gameOverText;
+var restartText;
 
-//  Direction consts
 var UP = 0;
 var DOWN = 1;
 var LEFT = 2;
@@ -25,26 +26,21 @@ var RIGHT = 3;
 
 var game = new Phaser.Game(config);
 
-function preload ()
-{
+function preload () {
     this.load.image('frog', 'assets/frog.png');
     this.load.image('body', 'assets/snake.png');
 }
 
-function create ()
-{
+function create () {
     var Frog = new Phaser.Class({
-
         Extends: Phaser.GameObjects.Image,
 
         initialize:
-
-        function Frog (scene, x, y)
-        {
+        function Frog (scene, x, y) {
             Phaser.GameObjects.Image.call(this, scene)
 
             this.setTexture('frog');
-            this.setPosition(x * 32, y * 32); // Fixed for 32x32 images
+            this.setPosition(x * 32, y * 32);
             this.setOrigin(0);
 
             this.total = 0;
@@ -52,218 +48,175 @@ function create ()
             scene.children.add(this);
         },
 
-        eat: function ()
-        {
+        eat: function () {
             this.total++;
         }
-
     });
 
     var Snake = new Phaser.Class({
-
         initialize:
-
-        function Snake (scene, x, y)
-        {
+        function Snake (scene, x, y) {
             this.headPosition = new Phaser.Geom.Point(x, y);
-
             this.body = scene.add.group();
-
-            this.head = this.body.create(x * 32, y * 32, 'body'); // Fixed for 32x32 images
+            this.head = this.body.create(x * 32, y * 32, 'body');
             this.head.setOrigin(0);
 
             this.alive = true;
-
             this.speed = 100;
-
             this.moveTime = 0;
-
             this.tail = new Phaser.Geom.Point(x, y);
-
             this.heading = RIGHT;
             this.direction = RIGHT;
         },
 
-        update: function (time)
-        {
-            if (time >= this.moveTime)
-            {
+        update: function (time) {
+            if (this.alive && time >= this.moveTime) {
                 return this.move(time);
             }
         },
 
-        faceLeft: function ()
-        {
-            if (this.direction === UP || this.direction === DOWN)
-            {
+        faceLeft: function () {
+            if (this.direction === UP || this.direction === DOWN) {
                 this.heading = LEFT;
             }
         },
 
-        faceRight: function ()
-        {
-            if (this.direction === UP || this.direction === DOWN)
-            {
+        faceRight: function () {
+            if (this.direction === UP || this.direction === DOWN) {
                 this.heading = RIGHT;
             }
         },
 
-        faceUp: function ()
-        {
-            if (this.direction === LEFT || this.direction === RIGHT)
-            {
+        faceUp: function () {
+            if (this.direction === LEFT || this.direction === RIGHT) {
                 this.heading = UP;
             }
         },
 
-        faceDown: function ()
-        {
-            if (this.direction === LEFT || this.direction === RIGHT)
-            {
+        faceDown: function () {
+            if (this.direction === LEFT || this.direction === RIGHT) {
                 this.heading = DOWN;
             }
         },
 
-        move: function (time)
-        {
-            switch (this.heading)
-            {
+        move: function (time) {
+            switch (this.heading) {
                 case LEFT:
-                    this.headPosition.x = Phaser.Math.Wrap(this.headPosition.x - 1, 0, 20); // 640px / 32px = 20 cols
+                    this.headPosition.x = Phaser.Math.Wrap(this.headPosition.x - 1, 0, 20);
                     break;
-
                 case RIGHT:
                     this.headPosition.x = Phaser.Math.Wrap(this.headPosition.x + 1, 0, 20);
                     break;
-
                 case UP:
-                    this.headPosition.y = Phaser.Math.Wrap(this.headPosition.y - 1, 0, 15); // 480px / 32px = 15 rows
+                    this.headPosition.y = Phaser.Math.Wrap(this.headPosition.y - 1, 0, 15);
                     break;
-
                 case DOWN:
                     this.headPosition.y = Phaser.Math.Wrap(this.headPosition.y + 1, 0, 15);
                     break;
             }
 
             this.direction = this.heading;
-
-            // Update body position with correct size
             Phaser.Actions.ShiftPosition(this.body.getChildren(), this.headPosition.x * 32, this.headPosition.y * 32, 1, this.tail);
 
             var hitBody = Phaser.Actions.GetFirst(this.body.getChildren(), { x: this.head.x, y: this.head.y }, 1);
 
-            if (hitBody)
-            {
-                console.log('dead');
+            if (hitBody) {
                 this.alive = false;
+                showGameOver();
                 return false;
-            }
-            else
-            {
+            } else {
                 this.moveTime = time + this.speed;
                 return true;
             }
         },
 
-        grow: function ()
-        {
+        grow: function () {
             var newPart = this.body.create(this.tail.x, this.tail.y, 'body');
             newPart.setOrigin(0);
         },
 
-        collideWithFrog: function (frog)
-        {
-            if (this.head.x === frog.x && this.head.y === frog.y)
-            {
+        collideWithFrog: function (frog) {
+            if (this.head.x === frog.x && this.head.y === frog.y) {
                 this.grow();
                 frog.eat();
-                score += 10; // Increase score
-                scoreText.setText('Score: ' + score); // Update score text
+                score += 10;
+                scoreText.setText('Score: ' + score);
 
-                if (this.speed > 20 && frog.total % 5 === 0)
-                {
+                if (this.speed > 20 && frog.total % 5 === 0) {
                     this.speed -= 5;
                 }
 
                 return true;
-            }
-            else
-            {
+            } else {
                 return false;
             }
         },
 
-        updateGrid: function (grid)
-        {
+        updateGrid: function (grid) {
             this.body.children.each(function (segment) {
-                var bx = segment.x / 32; // Fixed for 32x32 images
+                var bx = segment.x / 32;
                 var by = segment.y / 32;
-
                 grid[by][bx] = false;
             });
 
             return grid;
         }
-
     });
 
     frog = new Frog(this, 3, 4);
     snake = new Snake(this, 8, 8);
 
-    //  Create our keyboard controls
     cursors = this.input.keyboard.createCursorKeys();
+    this.input.keyboard.on('keydown-R', restartGame, this);
 
-    //  Add Score Text
     scoreText = this.add.text(10, 10, 'Score: 0', {
         fontSize: '20px',
         fill: '#bfcc00',
         fontFamily: 'Arial'
     });
+
+    gameOverText = this.add.text(320, 200, 'GAME OVER', {
+        fontSize: '40px',
+        fill: '#ff0000',
+        fontFamily: 'Arial'
+    }).setOrigin(0.5).setVisible(false);
+
+    restartText = this.add.text(320, 250, 'Press R to Restart', {
+        fontSize: '20px',
+        fill: '#ffffff',
+        fontFamily: 'Arial'
+    }).setOrigin(0.5).setVisible(false);
 }
 
-function update (time, delta)
-{
-    if (!snake.alive)
-    {
+function update (time, delta) {
+    if (!snake.alive) {
         return;
     }
 
-    if (cursors.left.isDown)
-    {
+    if (cursors.left.isDown) {
         snake.faceLeft();
-    }
-    else if (cursors.right.isDown)
-    {
+    } else if (cursors.right.isDown) {
         snake.faceRight();
-    }
-    else if (cursors.up.isDown)
-    {
+    } else if (cursors.up.isDown) {
         snake.faceUp();
-    }
-    else if (cursors.down.isDown)
-    {
+    } else if (cursors.down.isDown) {
         snake.faceDown();
     }
 
-    if (snake.update(time))
-    {
-        if (snake.collideWithFrog(frog))
-        {
+    if (snake.update(time)) {
+        if (snake.collideWithFrog(frog)) {
             repositionFrog();
         }
     }
 }
 
-function repositionFrog ()
-{
+function repositionFrog () {
     var testGrid = [];
 
-    for (var y = 0; y < 15; y++) // Fixed for 32x32 images
-    {
+    for (var y = 0; y < 15; y++) {
         testGrid[y] = [];
 
-        for (var x = 0; x < 20; x++) // Fixed for 32x32 images
-        {
+        for (var x = 0; x < 20; x++) {
             testGrid[y][x] = true;
         }
     }
@@ -272,25 +225,37 @@ function repositionFrog ()
 
     var validLocations = [];
 
-    for (var y = 0; y < 15; y++) // Fixed for 32x32 images
-    {
-        for (var x = 0; x < 20; x++) // Fixed for 32x32 images
-        {
-            if (testGrid[y][x] === true)
-            {
+    for (var y = 0; y < 15; y++) {
+        for (var x = 0; x < 20; x++) {
+            if (testGrid[y][x] === true) {
                 validLocations.push({ x: x, y: y });
             }
         }
     }
 
-    if (validLocations.length > 0)
-    {
+    if (validLocations.length > 0) {
         var pos = Phaser.Math.RND.pick(validLocations);
-        frog.setPosition(pos.x * 32, pos.y * 32); // Fixed for 32x32 images
+        frog.setPosition(pos.x * 32, pos.y * 32);
         return true;
-    }
-    else
-    {
+    } else {
         return false;
     }
+}
+
+function showGameOver() {
+    gameOverText.setVisible(true);
+    restartText.setVisible(true);
+}
+
+function restartGame() {
+    score = 0;
+    scoreText.setText('Score: 0');
+
+    snake.body.clear(true, true);
+    snake = new Snake(this, 8, 8);
+
+    repositionFrog();
+
+    gameOverText.setVisible(false);
+    restartText.setVisible(false);
 }
