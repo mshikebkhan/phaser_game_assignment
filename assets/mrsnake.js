@@ -167,7 +167,7 @@ function create () {
     snake = new Snake(this, 8, 8);
 
     cursors = this.input.keyboard.createCursorKeys();
-    this.input.keyboard.on('keydown-R', restartGame, this);
+    this.input.keyboard.on('keydown-R', () => restartGame(this));
 
     scoreText = this.add.text(10, 10, 'Score: 0', {
         fontSize: '20px',
@@ -247,12 +247,12 @@ function showGameOver() {
     restartText.setVisible(true);
 }
 
-function restartGame() {
+function restartGame(scene) {
     score = 0;
     scoreText.setText('Score: 0');
 
     snake.body.clear(true, true);
-    snake = new Snake(this, 8, 8);
+    snake = new Snake(scene, 8, 8);
 
     repositionFrog();
 
