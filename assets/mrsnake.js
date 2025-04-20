@@ -32,6 +32,8 @@ function preload () {
 }
 
 function create () {
+    var scene = this;
+
     var Frog = new Phaser.Class({
         Extends: Phaser.GameObjects.Image,
 
@@ -163,25 +165,27 @@ function create () {
         }
     });
 
-    frog = new Frog(this, 3, 4);
-    snake = new Snake(this, 8, 8);
+    frog = new Frog(scene, 3, 4);
+    snake = new Snake(scene, 8, 8);
 
-    cursors = this.input.keyboard.createCursorKeys();
-    this.input.keyboard.on('keydown-R', () => restartGame(this));
+    cursors = scene.input.keyboard.createCursorKeys();
+    scene.input.keyboard.on('keydown-R', function () {
+        restartGame(scene);
+    });
 
-    scoreText = this.add.text(10, 10, 'Score: 0', {
+    scoreText = scene.add.text(10, 10, 'Score: 0', {
         fontSize: '20px',
         fill: '#bfcc00',
         fontFamily: 'Arial'
     });
 
-    gameOverText = this.add.text(320, 200, 'GAME OVER', {
+    gameOverText = scene.add.text(320, 200, 'GAME OVER', {
         fontSize: '40px',
         fill: '#ff0000',
         fontFamily: 'Arial'
     }).setOrigin(0.5).setVisible(false);
 
-    restartText = this.add.text(320, 250, 'Press R to Restart', {
+    restartText = scene.add.text(320, 250, 'Press R to Restart', {
         fontSize: '20px',
         fill: '#ffffff',
         fontFamily: 'Arial'
@@ -251,8 +255,8 @@ function restartGame(scene) {
     score = 0;
     scoreText.setText('Score: 0');
 
-    snake.body.clear(true, true);
-    snake = new Snake(scene, 8, 8);
+    snake.body.clear(true, true); // Destroys all segments
+    snake = new scene.sys.settings.data.Snake(scene, 8, 8); // Recreate new snake
 
     repositionFrog();
 
