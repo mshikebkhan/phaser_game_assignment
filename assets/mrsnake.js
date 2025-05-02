@@ -190,6 +190,13 @@ function create () {
         fill: '#ffffff',
         fontFamily: 'Arial'
     }).setOrigin(0.5).setVisible(false);
+
+        scene.add.text(config.width / 2, config.height - 20, 'Developed by Shikeb Khan', {
+        fontSize: '16px',
+        fill: '#888888',
+        fontFamily: 'Arial'
+    }).setOrigin(0.5);
+
 }
 
 function update (time, delta) {
