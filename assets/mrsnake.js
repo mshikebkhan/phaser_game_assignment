@@ -18,6 +18,8 @@ var score = 0;
 var scoreText;
 var gameOverText;
 var restartText;
+var bgm; // Background music
+var eatSound; // Eat sound
 
 var UP = 0;
 var DOWN = 1;
@@ -29,10 +31,19 @@ var game = new Phaser.Game(config);
 function preload () {
     this.load.image('frog', 'assets/frog.png');
     this.load.image('body', 'assets/snake.png');
+    this.load.audio('bgm', 'assets/bgm.mp3');
+    this.load.audio('eat', 'assets/eat.mp3');
 }
 
 function create () {
     var scene = this;
+
+    // Background music
+    bgm = scene.sound.add('bgm', { loop: true, volume: 0.5 });
+    bgm.play();
+
+    // Eat sound
+    eatSound = scene.sound.add('eat');
 
     var Frog = new Phaser.Class({
         Extends: Phaser.GameObjects.Image,
@@ -141,6 +152,7 @@ function create () {
             if (this.head.x === frog.x && this.head.y === frog.y) {
                 this.grow();
                 frog.eat();
+                eatSound.play(); // 👈 Play eat sound
                 score += 10;
                 scoreText.setText('Score: ' + score);
 
@@ -191,12 +203,12 @@ function create () {
         fontFamily: 'Arial'
     }).setOrigin(0.5).setVisible(false);
 
-        scene.add.text(config.width / 2, config.height - 20, 'Developed by Shikeb Khan', {
-        fontSize: '16px',
+    // 👇 Developer credit
+    scene.add.text(320, 470, 'Developed by Shikeb Khan', {
+        fontSize: '14px',
         fill: '#888888',
         fontFamily: 'Arial'
     }).setOrigin(0.5);
-
 }
 
 function update (time, delta) {
@@ -226,7 +238,6 @@ function repositionFrog () {
 
     for (var y = 0; y < 15; y++) {
         testGrid[y] = [];
-
         for (var x = 0; x < 20; x++) {
             testGrid[y][x] = true;
         }
@@ -262,8 +273,8 @@ function restartGame(scene) {
     score = 0;
     scoreText.setText('Score: 0');
 
-    snake.body.clear(true, true); // Destroys all segments
-    snake = new scene.sys.settings.data.Snake(scene, 8, 8); // Recreate new snake
+    snake.body.clear(true, true);
+    snake = new scene.sys.settings.data.Snake(scene, 8, 8);
 
     repositionFrog();
 
